@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 var (
 	ds = NewDayState()
@@ -25,7 +29,7 @@ type dayState struct {
 }
 
 func (s *dayState) doClock(ctx Context, hour int) {
-	if hour < 9 || hour <= 17 {
+	if hour < 9 || hour >= 17 {
 		ctx.changeState(ns)
 	}
 }
@@ -75,7 +79,20 @@ type Context interface {
 	changeState(State)
 	callSecurityCenter(string)
 	recordLog(string)
+	actionPerform(actionSource)
 }
+
+type actionSource string
+
+const (
+	buttonUse   actionSource = "buttonUse"
+	buttonAlarm actionSource = "buttonAlarm"
+	buttonPhone actionSource = "buttonPhone"
+)
+
+var (
+	buttons = []actionSource{buttonUse, buttonAlarm, buttonPhone}
+)
 
 func NewSafeFrame(state State, msg string) Context {
 	return &safeFrame{
@@ -109,12 +126,23 @@ func (s *safeFrame) changeState(state State) {
 	s.state = state
 }
 func (s *safeFrame) callSecurityCenter(message string) {
-	s.textScreen = fmt.Sprintf(`%scall!! %s
-`, s.textScreen, message)
+	s.textScreen = fmt.Sprintf(`call!! %s`, message)
+	fmt.Println(s.textScreen)
 }
 func (s *safeFrame) recordLog(message string) {
-	s.textScreen = fmt.Sprintf(`%srecord... %s
-`, s.textScreen, message)
+	s.textScreen = fmt.Sprintf(`record... %s`, message)
+	fmt.Println(s.textScreen)
+}
+
+func (s *safeFrame) actionPerform(action actionSource) {
+	switch action {
+	case buttonUse:
+		s.state.doUse(s)
+	case buttonAlarm:
+		s.state.doAlarm(s)
+	case buttonPhone:
+		s.state.doPhone(s)
+	}
 }
 
 func main() {
@@ -123,6 +151,13 @@ func main() {
 	for true {
 		for hour := 0; hour < 24; hour++ {
 			frame.setClock(hour)
+
+			time.Sleep(time.Second * 2)
+
+			s := rand.NewSource(time.Now().Unix())
+			r := rand.New(s)
+
+			frame.actionPerform(buttons[r.Intn(len(buttons))])
 		}
 	}
 }
