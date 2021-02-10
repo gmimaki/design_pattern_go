@@ -1,34 +1,14 @@
 package main
 
-import "fmt"
-
-func NewTrouble(number int) Trouble {
-	return &trouble{
-		number: number,
-	}
-}
-
-type Trouble interface {
-	getNumber() int
-	toString() string
-}
-
-type trouble struct {
-	number int
-}
-
-func (s *trouble) getNumber() int {
-	return s.number
-}
-
-func (s *trouble) toString() string {
-	return fmt.Sprintf("[Trouble %d]", s.number)
-}
+import (
+	"chain/trouble"
+	"fmt"
+)
 
 type SupportInterface interface {
-	resolve(Trouble) bool
+	resolve(trouble.Trouble) bool
 	setNext(SupportInterface) SupportInterface
-	handle(Trouble)
+	handle(trouble.Trouble)
 }
 
 type support struct {
@@ -43,7 +23,7 @@ func (s *support) setNext(next SupportInterface) SupportInterface {
 	return next
 }
 
-func (s *support) handle(t Trouble) {
+func (s *support) handle(t trouble.Trouble) {
 	if s.own.resolve(t) {
 		s.done(t)
 	} else if s.next != nil {
@@ -57,16 +37,16 @@ func (s *support) toString() string {
 	return fmt.Sprintf("[%s]", s.name)
 }
 
-func (s *support) resolve(t Trouble) bool {
+func (s *support) resolve(t trouble.Trouble) bool {
 	return false
 }
 
-func (s *support) done(t Trouble) {
-	fmt.Println(fmt.Sprintf("%s is resolved by %s", t.toString(), s.toString()))
+func (s *support) done(t trouble.Trouble) {
+	fmt.Println(fmt.Sprintf("%s is resolved by %s", t.ToString(), s.toString()))
 }
 
-func (s *support) fail(t Trouble) {
-	fmt.Println(fmt.Sprintf("%s cannot be resolved", t.toString()))
+func (s *support) fail(t trouble.Trouble) {
+	fmt.Println(fmt.Sprintf("%s cannot be resolved", t.ToString()))
 }
 
 func NewNoSupport(name string) *noSupport {
@@ -83,7 +63,7 @@ type noSupport struct {
 	*support
 }
 
-func (s *noSupport) resolve(t Trouble) bool {
+func (s *noSupport) resolve(t trouble.Trouble) bool {
 	fmt.Println("No Support")
 	return false
 }
@@ -104,8 +84,8 @@ type limitSupport struct {
 	limit int
 }
 
-func (s *limitSupport) resolve(t Trouble) bool {
-	return t.getNumber() < s.limit
+func (s *limitSupport) resolve(t trouble.Trouble) bool {
+	return t.GetNumber() < s.limit
 }
 
 func NewOddSupport(name string) *oddSupport {
@@ -122,8 +102,8 @@ type oddSupport struct {
 	*support
 }
 
-func (s *oddSupport) resolve(t Trouble) bool {
-	return t.getNumber()%2 == 1
+func (s *oddSupport) resolve(t trouble.Trouble) bool {
+	return t.GetNumber()%2 == 1
 }
 
 func NewSpecialSupport(name string, number int) *specialSupport {
@@ -142,10 +122,10 @@ type specialSupport struct {
 	number int
 }
 
-func (s *specialSupport) resolve(t Trouble) bool {
+func (s *specialSupport) resolve(t trouble.Trouble) bool {
 	fmt.Println("Special Support")
-	fmt.Println(t.getNumber())
-	return t.getNumber() == s.number
+	fmt.Println(t.GetNumber())
+	return t.GetNumber() == s.number
 }
 
 func main() {
@@ -159,6 +139,6 @@ func main() {
 	alice.setNext(bob).setNext(charlie).setNext(diana).setNext(elmo).setNext(fred)
 
 	for i := 0; i < 500; i += 33 {
-		alice.handle(NewTrouble(i))
+		alice.handle(trouble.NewTrouble(i))
 	}
 }
